@@ -1,3 +1,4 @@
+@@ -0,0 +1,328 @@
 # -*- coding: utf-8 -*-
 # a basic script to read in the dicom file from the Lynx and analyze it- loops through all files that end in dcm in the folder
 # in general, all varialble names start with f- file, m-matrix, i-integer, s-string
@@ -19,6 +20,7 @@ import matplotlib.cm as cm
 import csv
 from matplotlib.patches import Ellipse, Rectangle
 vIdealLocations=[60,220,380,540]
+vMeanIdealLocation=np.mean(vIdealLocations)
 # define some simple functions that will be used later!
 def getKeyX(item):
     return item[0]   
@@ -36,22 +38,22 @@ if len(dirname ) > 0:
 # convert dirname to string from unicode
 os.chdir(dirname)
 files = [f for f in os.listdir('.') if f.endswith('.dcm')] # finds all the dicom files in the folder that you choose.
-filesOffset = [f for f in os.listdir('.') if f.endswith('Offsets.csv')]
+#filesOffset = [f for f in os.listdir('.') if f.endswith('Offsets.csv')]
 ### GET THE OFFSETS  ##########################################################
-mOffset=[]
-with open(filesOffset[0]) as csvfile:
-    readOffset=csv.reader(csvfile, delimiter=',')
-    fOffsetcsv=list(readOffset)
-    lOffsetX=fOffsetcsv[0]
-    lOffsetY=fOffsetcsv[1] 
-npOffsetX=np.array(lOffsetX)
-npOffsetY=np.array(lOffsetY)
+#mOffset=[]
+#with open(filesOffset[0]) as csvfile:
+#    readOffset=csv.reader(csvfile, delimiter=',')
+#   fOffsetcsv=list(readOffset)
+#    lOffsetX=fOffsetcsv[0]
+#    lOffsetY=fOffsetcsv[1] 
+#npOffsetX=np.array(lOffsetX)
+#npOffsetY=np.array(lOffsetY)
 
-iOffsetX=npOffsetX[1].astype(np.float)
-iOffsetY=-1*npOffsetY[1].astype(np.float)
+#iOffsetX=npOffsetX[1].astype(np.float)
+#iOffsetY=-1*npOffsetY[1].astype(np.float)
 
-print("iOffsetX is %f" % iOffsetX)
-print("iOffsetY is %f" % -iOffsetY)
+#print("iOffsetX is %f" % iOffsetX)
+#print("iOffsetY is %f" % -iOffsetY)
 
 #### now loop through the dicom files from lynx and analyze each one ########
 #### all of the results will be reported in Lynx.csv
@@ -119,15 +121,15 @@ while iCounter < iNumFiles:
         mSigmax[0,iIndex]=iIndex+1
         mSigmay[0,iIndex]=iIndex+1
      
-        mSpots.append((cy+y,cx+x,vOptx[2]*0.5,vOpty[2]*0.5)) 
+        mSpots.append((cy+y,cx+x,vOptx[2]*0.5,vOpty[2]*0.5))  
         mCentroidSigma.append((cy+y,cx+x,vOptx[2],vOpty[2]))
         mCentroidsPixels.append((cy+y, cx+x))
         iIndex=iIndex+1        
         
     ###########################################################################
     # now sort the spots so that the order is consistent
-    mSpotsSortedX=sorted(mSpots,key=getKeyX)
-    # now sort according to cy
+    mSpotsSortedX=sorted(mSpots,key=getKeyX) # actually sorting by cx
+    # now sort according to cy (actually cx)
     mSpotsSortedY0=np.array(sorted(mSpotsSortedX[0:4],key=getKeyY))
     mSpotsSortedY1=np.array(sorted(mSpotsSortedX[4:8],key=getKeyY))
     mSpotsSortedY2=np.array(sorted(mSpotsSortedX[8:12],key=getKeyY))
@@ -139,34 +141,38 @@ while iCounter < iNumFiles:
     mSpotsSorted[8:12,0:4]=mSpotsSortedY2[:,:]
     mSpotsSorted[12:16,0:4]=mSpotsSortedY3[:,:]
     ###########################################################################
-    mSpotsSorted[0:4,4]=mSpotsSortedY0[:,0]-59
-    mSpotsSorted[4:8,4]=mSpotsSortedY1[:,0]-219
-    mSpotsSorted[8:12,4]=mSpotsSortedY2[:,0]-379
-    mSpotsSorted[12:16,4]=mSpotsSortedY3[:,0]-539
+    mSpotsSorted[0:4,4]=mSpotsSortedY0[:,0]-vIdealLocations[0]
+    mSpotsSorted[4:8,4]=mSpotsSortedY1[:,0]-vIdealLocations[1]
+    mSpotsSorted[8:12,4]=mSpotsSortedY2[:,0]-vIdealLocations[2]
+    mSpotsSorted[12:16,4]=mSpotsSortedY3[:,0]-vIdealLocations[3]
     # determine the deviations from the expected cy ###########################
-    mSpotsSorted[0,5]=mSpotsSortedY0[0,1]-59
-    mSpotsSorted[1,5]=mSpotsSortedY0[1,1]-219
-    mSpotsSorted[2,5]=mSpotsSortedY0[2,1]-379
-    mSpotsSorted[3,5]=mSpotsSortedY0[3,1]-539
-    mSpotsSorted[4,5]=mSpotsSortedY1[0,1]-59
-    mSpotsSorted[5,5]=mSpotsSortedY1[1,1]-219
-    mSpotsSorted[6,5]=mSpotsSortedY1[2,1]-379
-    mSpotsSorted[7,5]=mSpotsSortedY1[3,1]-539
-    mSpotsSorted[8,5]=mSpotsSortedY2[0,1]-59
-    mSpotsSorted[9,5]=mSpotsSortedY2[1,1]-219
-    mSpotsSorted[10,5]=mSpotsSortedY2[2,1]-379
-    mSpotsSorted[11,5]=mSpotsSortedY2[3,1]-539
-    mSpotsSorted[12,5]=mSpotsSortedY3[0,1]-59
-    mSpotsSorted[13,5]=mSpotsSortedY3[1,1]-219
-    mSpotsSorted[14,5]=mSpotsSortedY3[2,1]-379
-    mSpotsSorted[15,5]=mSpotsSortedY3[3,1]-539
+    mSpotsSorted[0,5]=mSpotsSortedY0[0,1]-vIdealLocations[0]
+    mSpotsSorted[1,5]=mSpotsSortedY0[1,1]-vIdealLocations[1]
+    mSpotsSorted[2,5]=mSpotsSortedY0[2,1]-vIdealLocations[2]
+    mSpotsSorted[3,5]=mSpotsSortedY0[3,1]-vIdealLocations[3]
+    mSpotsSorted[4,5]=mSpotsSortedY1[0,1]-vIdealLocations[0]
+    mSpotsSorted[5,5]=mSpotsSortedY1[1,1]-vIdealLocations[1]
+    mSpotsSorted[6,5]=mSpotsSortedY1[2,1]-vIdealLocations[2]
+    mSpotsSorted[7,5]=mSpotsSortedY1[3,1]-vIdealLocations[3]
+    mSpotsSorted[8,5]=mSpotsSortedY2[0,1]-vIdealLocations[0]
+    mSpotsSorted[9,5]=mSpotsSortedY2[1,1]-vIdealLocations[1]
+    mSpotsSorted[10,5]=mSpotsSortedY2[2,1]-vIdealLocations[2]
+    mSpotsSorted[11,5]=mSpotsSortedY2[3,1]-vIdealLocations[3]
+    mSpotsSorted[12,5]=mSpotsSortedY3[0,1]-vIdealLocations[0]
+    mSpotsSorted[13,5]=mSpotsSortedY3[1,1]-vIdealLocations[1]
+    mSpotsSorted[14,5]=mSpotsSortedY3[2,1]-vIdealLocations[2]
+    mSpotsSorted[15,5]=mSpotsSortedY3[3,1]-vIdealLocations[3]
     mSpotsSorted[:,5]=mSpotsSorted[:,5]*0.5 # convert to mm
     mSpotsSorted[:,4]=mSpotsSorted[:,4]*0.5  # convert to mm
+    iOffsetX =-(np.mean(np.array(mSpots)[:,0]) - vMeanIdealLocation) # pixels
+    iOffsetY =-(np.mean(np.array(mSpots)[:,1]) - vMeanIdealLocation) # pixels
+    print("iOffsetX %d is %f" % (iCounter,iOffsetX))
+    print("iOffsetY %d is %f" % (iCounter,-iOffsetY))
     # define offset as the average shift
     mSpotsSorted[:,0]=mSpotsSorted[:,0] +iOffsetX
     mSpotsSorted[:,1]=mSpotsSorted[:,1] +iOffsetY
-    mSpotsSorted[:,4]=mSpotsSorted[:,4] +iOffsetX
-    mSpotsSorted[:,5]=mSpotsSorted[:,5] +iOffsetY
+    mSpotsSorted[:,4]=mSpotsSorted[:,4] +iOffsetX*0.5 # convert to mm
+    mSpotsSorted[:,5]=mSpotsSorted[:,5] +iOffsetY*0.5 # convert to mm
     # calc the uniformity of the spots & mean sigma  ##########################
     mSpotsUniformity=np.zeros([16,6])
     mSpotsUniformity=mSpotsSorted[:,2]/mSpotsSorted[:,3]
@@ -315,7 +321,6 @@ plt.title('Centroid locations. Red Box = 4 mm Box around ideal location')
 plt.xlabel('Pixels (1 pixel = 0.5 mm)')
 plt.ylabel('Pixels (1 pixel = 0.5 mm)')
 plt.savefig('AllCentroids.pdf')
-
 
 
 
